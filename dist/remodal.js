@@ -7,18 +7,8 @@
  *  Under MIT License
  */
 
-!(function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define(['jquery'], function($) {
-      return factory(root, $);
-    });
-  } else if (typeof exports === 'object') {
-    factory(root, require('jquery'));
-  } else {
-    factory(root, root.jQuery || root.Zepto);
-  }
-})(this, function(global, $) {
 
+(function (global) {
   'use strict';
 
   /**
@@ -43,14 +33,16 @@
    * @const
    * @type {String}
    */
-  var ANIMATIONSTART_EVENTS = $.map(
-    ['animationstart', 'webkitAnimationStart', 'MSAnimationStart', 'oAnimationStart'],
-
-    function(eventName) {
-      return eventName + '.' + NAMESPACE;
-    }
-
-  ).join(' ');
+  var ANIMATIONSTART_EVENTS = [
+    'animationstart',
+    'webkitAnimationStart',
+    'MSAnimationStart',
+    'oAnimationStart']
+    .map(
+      function(eventName) {
+        return eventName + '.' + NAMESPACE;
+      }
+    ).join(' ');
 
   /**
    * Animationend event with vendor prefixes
@@ -58,14 +50,38 @@
    * @const
    * @type {String}
    */
-  var ANIMATIONEND_EVENTS = $.map(
-    ['animationend', 'webkitAnimationEnd', 'MSAnimationEnd', 'oAnimationEnd'],
+  var ANIMATIONEND_EVENTS = [
+    'animationend',
+    'webkitAnimationEnd',
+    'MSAnimationEnd',
+    'oAnimationEnd']
+    .map(
+      function(eventName) {
+        return eventName + '.' + NAMESPACE;
+      }
+    ).join(' ');
 
-    function(eventName) {
-      return eventName + '.' + NAMESPACE;
+  /**
+   * Extend helper function
+   * @returns {Object}
+   */
+  var extend = function(out) {
+    out = out || {};
+
+    for (var i = 1; i < arguments.length; i++) {
+      if (!arguments[i]) {
+        continue;
+      }
+
+      for (var key in arguments[i]) {
+        if (arguments[i].hasOwnProperty(key)) {
+          out[key] = arguments[i][key];
+        }
+      }
     }
 
-  ).join(' ');
+    return out;
+  };
 
   /**
    * Default settings
@@ -73,7 +89,7 @@
    * @const
    * @type {Object}
    */
-  var DEFAULTS = $.extend({
+  var DEFAULTS = extend({
     hashTracking: true,
     closeOnConfirm: true,
     closeOnCancel: true,
@@ -148,40 +164,40 @@
   /**
    * Returns an animation duration
    * @private
-   * @param {jQuery} $elem
+   * @param {jQuery} elem
    * @returns {Number}
    */
-  function getAnimationDuration($elem) {
+  function getAnimationDuration(elem) {
     if (
       IS_ANIMATION &&
-      $elem.css('animation-name') === 'none' &&
-      $elem.css('-webkit-animation-name') === 'none' &&
-      $elem.css('-moz-animation-name') === 'none' &&
-      $elem.css('-o-animation-name') === 'none' &&
-      $elem.css('-ms-animation-name') === 'none'
+      getComputedStyle(elem)['animation-name'] === 'none' &&
+      getComputedStyle(elem)['-webkit-animation-name'] === 'none' &&
+      getComputedStyle(elem)['-moz-animation-name'] === 'none' &&
+      getComputedStyle(elem)['-o-animation-name'] === 'none' &&
+      getComputedStyle(elem)['-ms-animation-name'] === 'none'
     ) {
       return 0;
     }
 
-    var duration = $elem.css('animation-duration') ||
-      $elem.css('-webkit-animation-duration') ||
-      $elem.css('-moz-animation-duration') ||
-      $elem.css('-o-animation-duration') ||
-      $elem.css('-ms-animation-duration') ||
+    var duration = getComputedStyle(elem)['animation-duration'] ||
+      getComputedStyle(elem)['-webkit-animation-duration'] ||
+      getComputedStyle(elem)['-moz-animation-duration'] ||
+      getComputedStyle(elem)['-o-animation-duration'] ||
+      getComputedStyle(elem)['-ms-animation-duration'] ||
       '0s';
 
-    var delay = $elem.css('animation-delay') ||
-      $elem.css('-webkit-animation-delay') ||
-      $elem.css('-moz-animation-delay') ||
-      $elem.css('-o-animation-delay') ||
-      $elem.css('-ms-animation-delay') ||
+    var delay = getComputedStyle(elem)['animation-delay'] ||
+      getComputedStyle(elem)['-webkit-animation-delay'] ||
+      getComputedStyle(elem)['-moz-animation-delay'] ||
+      getComputedStyle(elem)['-o-animation-delay'] ||
+      getComputedStyle(elem)['-ms-animation-delay'] ||
       '0s';
 
-    var iterationCount = $elem.css('animation-iteration-count') ||
-      $elem.css('-webkit-animation-iteration-count') ||
-      $elem.css('-moz-animation-iteration-count') ||
-      $elem.css('-o-animation-iteration-count') ||
-      $elem.css('-ms-animation-iteration-count') ||
+    var iterationCount = getComputedStyle(elem)['animation-iteration-count'] ||
+      getComputedStyle(elem)['-webkit-animation-iteration-count'] ||
+      getComputedStyle(elem)['-moz-animation-iteration-count'] ||
+      getComputedStyle(elem)['-o-animation-iteration-count'] ||
+      getComputedStyle(elem)['-ms-animation-iteration-count'] ||
       '1';
 
     var max;
@@ -211,7 +227,7 @@
    * @returns {Number}
    */
   function getScrollbarWidth() {
-    if ($(document).height() <= $(window).height()) {
+    if (document.body.scrollHeight <= document.body.clientHeight) {
       return 0;
     }
 
@@ -250,19 +266,18 @@
       return;
     }
 
-    var $html = $('html');
+    var html = document.documentElement;
     var lockedClass = namespacify('is-locked');
     var paddingRight;
-    var $body;
+    var body;
 
-    if (!$html.hasClass(lockedClass)) {
-      $body = $(document.body);
+    if (!html.classList.contains(lockedClass)) {
+      body = document.body;
 
-      // Zepto does not support '-=', '+=' in the `css` method
-      paddingRight = parseInt($body.css('padding-right'), 10) + getScrollbarWidth();
+      paddingRight = parseInt(getComputedStyle(body)['padding-right'], 10) + getScrollbarWidth();
 
-      $body.css('padding-right', paddingRight + 'px');
-      $html.addClass(lockedClass);
+      body.style.paddingRight = paddingRight + 'px';
+      html.classList.add(lockedClass);
     }
   }
 
@@ -275,19 +290,18 @@
       return;
     }
 
-    var $html = $('html');
+    var html = document.documentElement;
     var lockedClass = namespacify('is-locked');
     var paddingRight;
-    var $body;
+    var body;
 
-    if ($html.hasClass(lockedClass)) {
-      $body = $(document.body);
+    if (html.classList.contains(lockedClass)) {
+      body = document.body;
 
-      // Zepto does not support '-=', '+=' in the `css` method
-      paddingRight = parseInt($body.css('padding-right'), 10) - getScrollbarWidth();
+      paddingRight = parseInt(getComputedStyle(body)['padding-right'], 10) - getScrollbarWidth();
 
-      $body.css('padding-right', paddingRight + 'px');
-      $html.removeClass(lockedClass);
+      body.style.paddingRight = paddingRight + 'px';
+      html.classList.remove(lockedClass);
     }
   }
 
@@ -306,6 +320,9 @@
                      namespacify('is', STATES.OPENING),
                      namespacify('is', STATES.CLOSED),
                      namespacify('is', STATES.OPENED)].join(' ');
+
+    // instance.$bg.classList.remove(allStates)
+    // instance.$bg.classList.add(newState)
 
     instance.$bg
       .removeClass(allStates)
@@ -471,7 +488,7 @@
   function handleHashChangeEvent() {
     var id = location.hash.replace('#', '');
     var instance;
-    var $elem;
+    var elem;
 
     if (!id) {
 
@@ -483,13 +500,14 @@
 
       // Catch syntax error if your hash is bad
       try {
-        $elem = $(
+        elem = document.querySelectorAll(
           '[data-' + PLUGIN_NAME + '-id="' + id + '"]'
         );
       } catch (err) {}
 
-      if ($elem && $elem.length) {
-        instance = $[PLUGIN_NAME].lookup[$elem.data(PLUGIN_NAME)];
+      if (elem && elem.length) {
+        instance = document.querySelectorAll(PLUGIN_NAME).lookup[elem.dataset.PLUGIN_NAME];
+        console.log(document.querySelectorAll(PLUGIN_NAME));
 
         if (instance && instance.settings.hashTracking) {
           instance.open();
@@ -510,7 +528,7 @@
     var $appendTo = $body;
     var remodal = this;
 
-    remodal.settings = $.extend({}, DEFAULTS, options);
+    remodal.settings = extend({}, DEFAULTS, options);
     remodal.index = $[PLUGIN_NAME].lookup.push(remodal) - 1;
     remodal.state = STATES.CLOSED;
 
@@ -782,4 +800,4 @@
     // Handles the hashchange event
     $(window).on('hashchange.' + NAMESPACE, handleHashChangeEvent);
   });
-});
+}(this));
